@@ -25,6 +25,7 @@ class MaintenanceScheduler(object):
         return TinyDB(os.path.join(config.SCHEDULE_FILE_PATH, config.SCHEDULE_FILE_NAME))
 
     def get_maintenance_events_starting_soon(self):
+        LOG.info("Checking for events that are starting soon...")
         Event = Query()
         now = datetime.now()
         events_starting_soon = []
@@ -37,6 +38,7 @@ class MaintenanceScheduler(object):
         return events_starting_soon
 
     def get_maintenance_events_recently_ended(self):
+        LOG.info("Checking for events that recently ended...")
         Event = Query()
         now = datetime.now()
         events_recently_ended = []
@@ -61,9 +63,11 @@ class MaintenanceScheduler(object):
         return
 
     def run(self):
+        LOG.info("Starting scheduler loop")
         while True:
-            time.sleep(60)
             self.tick()
+            for _ in range(60):
+                time.sleep(1)   # Less-blocking sleep
 
     def tick(self):
         LOG.info("Tick started.")
