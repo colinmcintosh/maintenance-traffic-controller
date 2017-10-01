@@ -38,7 +38,9 @@ class TestBasicEngageEnd2End(unittest.TestCase):
         self.fake_circuit = {
             "cid": "ABC1234XYZ",
             "hostname": "switch01.lab.local",
-            "interface_name": "Ethernet1"
+            "interface_name": "Ethernet1",
+            "vendor": "iosxr",
+            "traffic_shift_mode": "DENYALL"
         }
         with self.schedule_db() as db:
             db.purge()

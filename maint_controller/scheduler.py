@@ -79,7 +79,7 @@ class MaintenanceScheduler(object):
                 LOG.error("No circuit information could be found for CID {}".format(event["cid"]))
                 continue
             LOG.info("Engaging maintenance mode for {} {} ({})".format(cdb_entry["hostname"], cdb_entry["interface_name"], event["event_uuid"]))
-            self._traffic_controller.engage_maintenance_mode(hostname=cdb_entry["hostname"], interface_name=cdb_entry["interface_name"])
+            self._traffic_controller.engage_maintenance_mode(hostname=cdb_entry["hostname"], vendor=cdb_entry["vendor"], traffic_shift_mode=cdb_entry["traffic_shift_mode"])
             self.mark_maintenance_mode_engaged(event["event_uuid"])
 
         events = self.get_maintenance_events_recently_ended()
@@ -90,6 +90,6 @@ class MaintenanceScheduler(object):
                 LOG.error("No circuit information could be found for CID {}".format(event["cid"]))
                 continue
             LOG.info("Disengaging maintenance mode for {} {} ({})".format(cdb_entry["hostname"], cdb_entry["interface_name"], event["event_uuid"]))
-            self._traffic_controller.disengage_maintenance_mode(hostname=cdb_entry["hostname"], interface_name=cdb_entry["interface_name"])
+            self._traffic_controller.disengage_maintenance_mode(hostname=cdb_entry["hostname"], vendor=cdb_entry["vendor"], traffic_shift_mode=cdb_entry["traffic_shift_mode"])
             self.mark_maintenance_mode_disengaged(event["event_uuid"])
         LOG.info("Tick ended")

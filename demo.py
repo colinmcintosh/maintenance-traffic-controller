@@ -26,7 +26,9 @@ class DemoFakeout(object):
     fake_circuit = {
         "cid": "ABC1234XYZ",
         "hostname": "switch01.lab.local",
-        "interface_name": "Ethernet1"
+        "interface_name": "Ethernet1",
+        "vendor": "iosxr",
+        "traffic_shift_mode": "DENYALL"
     }
 
     def run_fakeout(self):
