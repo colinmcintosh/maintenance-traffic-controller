@@ -2,7 +2,7 @@
 
 # Maintenance Notification Traffic Controller
 
-Created by Colin McIntosh & [...](#)
+Created by Colin McIntosh & [Aaron Atac](https://github.com/kopazetic)
 
 
 ## Overview
