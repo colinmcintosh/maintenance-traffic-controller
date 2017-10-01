@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright 2017 Netflix
+
 import os
 import time
 from datetime import datetime, timedelta
@@ -19,9 +19,6 @@ class MaintenanceScheduler(object):
 
     def schedule_db(self):
         return TinyDB(os.path.join(config.CDB_FILE_PATH, config.CDB_FILE_NAME))
-
-    def load_events_from_database(self):
-        pass
 
     def get_maintenance_events_starting_soon(self):
         Event = Query()
