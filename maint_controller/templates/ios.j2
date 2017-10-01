@@ -1,14 +1,25 @@
 {% if DENYALL %}
 
-neighbor {{neighbor_addr}} route-map DENY_ALL in
+neighbor {{neighbor_addr or peer_group_name}} route-map DENY_ALL in
 access-list 1 deny any
 !
-neighbor {{neighbor_addr}} route-map DENY_ALL out
+neighbor {{neighbor_addr or peer_group_name}} route-map DENY_ALL out
 access-list 1 deny any 
 !
 route-map DENY_ALL permit 10
 match ip address 1 
 
+{% endif %}
+
+{% if DENYALL_disengage %}
+
+!
+neighbor {{neighbor_addr or peer_group_name}} route-map {{IN_PEER}} in
+no access-list 1 deny any
+!
+neighbor {{neighbor_addr or peer_group_name}} route-map {{OUT_PEER}} out
+no access-list 1 deny any
+!
 {% endif %}
 
 {% if TRFENG %}
@@ -17,16 +28,22 @@ match ip address 1
 if the other peer starts to have issues/goes down as well, 
 then you can instead just do traffic engineering to prefer the other peer(s). #}
 
-!
-neighbor {{neighbor_addr or peer_group_name}} route-map {{IN_PEER}} in
-!
-neighbor {{neighbor_addr or peer_group_name}} route-map {{OUT_PEER}} out
-!
 route-map {{IN_PEER}} permit 10
 set local-preference 5
 !
 route-map {{OUT_PEER}} permit 20
 set as-path PREPEND_3 {{asn}} {{asn}} {{asn}}
+!
+
+{% endif %}
+
+{% if TRFENG_disengage %}
+
+route-map {{IN_PEER}} permit 10
+no set local-preference 5
+!
+route-map {{OUT_PEER}} permit 20
+no set as-path PREPEND_3 {{asn}} {{asn}} {{asn}}
 !
 
 {% endif %}

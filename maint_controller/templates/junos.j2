@@ -1,10 +1,16 @@
 {% if DENYALL %}
 
-set protocols bgp group {{PEERNAME}} import DENY-ALL-IMPORT
-set protocols bgp group {{PEERNAME}} export DENY-ALL-EXPORT
+replace protocols bgp group {{peer_group_name}} import DENY-ALL
+replace protocols bgp group {{peer_group_name}} export DENY-ALL
 
-set policy-options policy-statement DENY-ALL-IMPORT then reject
-set policy-options policy-statement DENY-ALL-EXPORT then reject
+set policy-options policy-statement DENY-ALL then reject
+
+{% endif %}
+
+{% if DENYALL_disengage %}
+
+replace protocols bgp group {{peer_group_name}} import {{IN_PEER}}
+replace protocols bgp group {{peer_group_name}} export {{OUT_PEER}}
 
 {% endif %}
 
@@ -14,14 +20,19 @@ set policy-options policy-statement DENY-ALL-EXPORT then reject
 if the other peer starts to have issues/goes down as well, 
 then you can instead just do traffic engineering to prefer the other peer(s). #}
 
-set protocols bgp group {{PEERNAME}} import {{IN_PEER_POLICY}}
-set protocols bgp group {{PEERNAME}} export {{OUT_PEER_POLICY}}
+set policy-options policy-statement {{IN_PEER}} term LOCAL_PREF_ADJ then local-preference 5
+set policy-options policy-statement {{IN_PEER}} term LOCAL_PREF_ADJ then accept
+set policy-options policy-statement {{IN_PEER}} term LOCAL_PREF_ADJ then next policy
+set policy-options policy-statement {{OUT_PEER}} term AS_PATH_PREPEND_3 then as-path-prepend "{{asn}} {{asn}} {{asn}}"
+set policy-options policy-statement {{OUT_PEER}} term AS_PATH_PREPEND_3 then accept
+set policy-options policy-statement {{OUT_PEER}} term AS_PATH_PREPEND_3 then next policy
 
-set policy-options policy-statement {{IN_PEER_POLICY}} term LOCAL_PREF_ADJ then local-preference 5
-set policy-options policy-statement {{IN_PEER_POLICY}} term LOCAL_PREF_ADJ then accept
-set policy-options policy-statement {{IN_PEER_POLICY}} term LOCAL_PREF_ADJ then next policy
-set policy-options policy-statement {{OUT_PEER_POLICY}} term AS_PATH_PREPEND_3 then as-path-prepend "{{asn}} {{asn}} {{asn}}"
-set policy-options policy-statement {{OUT_PEER_POLICY}} term AS_PATH_PREPEND_3 then accept
-set policy-options policy-statement {{OUT_PEER_POLICY}} term AS_PATH_PREPEND_3 then next policy
+{% endif %}
+
+{% if TRFENG_disengage %}
+
+delete policy-options policy-statement {{IN_PEER}} term LOCAL_PREF_ADJ
+delete policy-options policy-statement {{OUT_PEER}} term AS_PATH_PREPEND_3
+
 
 {% endif %}
