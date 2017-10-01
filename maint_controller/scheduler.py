@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-
+import logging
 import os
 import time
 from datetime import datetime, timedelta
@@ -11,6 +11,9 @@ from maint_controller.config import config
 from maint_controller.controller import TrafficController
 
 
+LOG = logging.getLogger(__name__)
+
+
 class MaintenanceScheduler(object):
 
     def __init__(self):
@@ -18,16 +21,17 @@ class MaintenanceScheduler(object):
         self._cdb = CircuitDB()
 
     def schedule_db(self):
-        return TinyDB(os.path.join(config.CDB_FILE_PATH, config.CDB_FILE_NAME))
+        os.makedirs(config.SCHEDULE_FILE_PATH, exist_ok=True)
+        return TinyDB(os.path.join(config.SCHEDULE_FILE_PATH, config.SCHEDULE_FILE_NAME))
 
     def get_maintenance_events_starting_soon(self):
         Event = Query()
         now = datetime.now()
         events_starting_soon = []
         with self.schedule_db() as db:
-            results = db.search(Event.maintenance_engaged is not True)
+            results = db.search((~ Event.maintenance_engaged.exists()) | (Event.maintenance_engaged != True))
             for event in results:
-                event_start_time = datetime.strptime(event["start_time"], "%Y-%m-%dT%H:%M:%s")
+                event_start_time = datetime.strptime(event["start_time"], "%Y-%m-%dT%H:%M:%S")
                 if now - event_start_time < timedelta(minutes=5):
                     events_starting_soon.append(event)
         return events_starting_soon
@@ -37,9 +41,9 @@ class MaintenanceScheduler(object):
         now = datetime.now()
         events_recently_ended = []
         with self.schedule_db() as db:
-            results = db.search(Event.maintenance_engaged is True)
+            results = db.search(Event.maintenance_engaged == True)
             for event in results:
-                event_end_time = datetime.strptime(event["end_time"], "%Y-%m-%dT%H:%M:%s")
+                event_end_time = datetime.strptime(event["end_time"], "%Y-%m-%dT%H:%M:%S")
                 if now > event_end_time:
                     events_recently_ended.append(event)
         return events_recently_ended
@@ -59,14 +63,29 @@ class MaintenanceScheduler(object):
     def run(self):
         while True:
             time.sleep(60)
-            events = self.get_maintenance_events_starting_soon()
-            for event in events:
-                cdb_entry = self._cdb.get_circuit_by_cid(cid=event["cid"])
-                self._traffic_controller.engage_maintenance_mode(hostname=cdb_entry["hostname"], interface_name=cdb_entry["interface_name"])
-                self.mark_maintenance_mode_engaged(event["event_uuid"])
+            self.tick()
 
-            events = self.get_maintenance_events_recently_ended()
-            for event in events:
-                cdb_entry = self._cdb.get_circuit_by_cid(cid=event["cid"])
-                self._traffic_controller.disengage_maintenance_mode(hostname=cdb_entry["hostname"], interface_name=cdb_entry["interface_name"])
-                self.mark_maintenance_mode_disengaged(event["event_uuid"])
+    def tick(self):
+        LOG.info("Tick started.")
+        events = self.get_maintenance_events_starting_soon()
+        LOG.info("Found {} events that are starting soon.".format(len(events)))
+        for event in events:
+            cdb_entry = self._cdb.get_circuit_by_cid(cid=event["cid"])
+            if not cdb_entry:
+                LOG.error("No circuit information could be found for CID {}".format(event["cid"]))
+                continue
+            LOG.info("Engaging maintenance mode for {} {} ({})".format(cdb_entry["hostname"], cdb_entry["interface_name"], event["event_uuid"]))
+            self._traffic_controller.engage_maintenance_mode(hostname=cdb_entry["hostname"], interface_name=cdb_entry["interface_name"])
+            self.mark_maintenance_mode_engaged(event["event_uuid"])
+
+        events = self.get_maintenance_events_recently_ended()
+        LOG.info("Found {} events that recently ended.".format(len(events)))
+        for event in events:
+            cdb_entry = self._cdb.get_circuit_by_cid(cid=event["cid"])
+            if not cdb_entry:
+                LOG.error("No circuit information could be found for CID {}".format(event["cid"]))
+                continue
+            LOG.info("Disengaging maintenance mode for {} {} ({})".format(cdb_entry["hostname"], cdb_entry["interface_name"], event["event_uuid"]))
+            self._traffic_controller.disengage_maintenance_mode(hostname=cdb_entry["hostname"], interface_name=cdb_entry["interface_name"])
+            self.mark_maintenance_mode_disengaged(event["event_uuid"])
+        LOG.info("Tick ended")

@@ -13,6 +13,8 @@ class BaseConfig(object):
 
 class TestConfig(BaseConfig):
 
+    SCHEDULE_FILE_PATH = "/tmp/manage-maintenance"
+
     CDB_FILE_PATH = "/tmp/maint-traffic-controller"
 
 
