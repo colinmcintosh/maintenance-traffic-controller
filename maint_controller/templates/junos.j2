@@ -1,0 +1,27 @@
+{% if DENYALL %}
+
+set protocols bgp group {{PEERNAME}} import DENY-ALL-IMPORT
+set protocols bgp group {{PEERNAME}} export DENY-ALL-EXPORT
+
+set policy-options policy-statement DENY-ALL-IMPORT then reject
+set policy-options policy-statement DENY-ALL-EXPORT then reject
+
+{% endif %}
+
+{% if TRFENG %}
+
+{# ALTERNATIVELY if you do not want to do a DENY-ALL in the case that you only have two peers and are worried about 
+if the other peer starts to have issues/goes down as well, 
+then you can instead just do traffic engineering to prefer the other peer(s). #}
+
+set protocols bgp group {{PEERNAME}} import {{IN_PEER_POLICY}}
+set protocols bgp group {{PEERNAME}} export {{OUT_PEER_POLICY}}
+
+set policy-options policy-statement {{IN_PEER_POLICY}} term LOCAL_PREF_ADJ then local-preference 5
+set policy-options policy-statement {{IN_PEER_POLICY}} term LOCAL_PREF_ADJ then accept
+set policy-options policy-statement {{IN_PEER_POLICY}} term LOCAL_PREF_ADJ then next policy
+set policy-options policy-statement {{OUT_PEER_POLICY}} term AS_PATH_PREPEND_3 then as-path-prepend "{{asn}} {{asn}} {{asn}}"
+set policy-options policy-statement {{OUT_PEER_POLICY}} term AS_PATH_PREPEND_3 then accept
+set policy-options policy-statement {{OUT_PEER_POLICY}} term AS_PATH_PREPEND_3 then next policy
+
+{% endif %}

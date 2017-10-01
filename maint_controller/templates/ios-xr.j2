@@ -1,3 +1,5 @@
+{% if DENYALL %}
+
 !
 neighbor {{neighbor_addr or peer_group_name}} route-policy {{IN_PEER}} in
 !
@@ -7,8 +9,13 @@ route-policy DENY_ALL
 	drop
 end-policy
 
-!ALTERNATIVELY if you do not want to do a DENY-ALL in the case that you only have two peers and are worried about if the other peer starts to have issues/goes down as well, then you can instead just do traffic engineering to prefer the other peer(s).
-!
+{% endif %}
+
+{% if TRFENG %}
+
+{# ALTERNATIVELY if you do not want to do a DENY-ALL in the case that you only have two peers and are worried about 
+if the other peer starts to have issues/goes down as well, 
+then you can instead just do traffic engineering to prefer the other peer(s). #}
 
 route-policy {{IN_PEER}}
 	set local-preference 5
@@ -18,3 +25,5 @@ route-policy {{OUT_PEER}}
 	prepend as-path {{asn}} {{asn}} {{asn}}
 end-policy
 !
+
+{% endif %}
