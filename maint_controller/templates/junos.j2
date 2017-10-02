@@ -22,10 +22,8 @@ then you can instead just do traffic engineering to prefer the other peer(s). #}
 
 set policy-options policy-statement {{IN_PEER}} term LOCAL_PREF_ADJ then local-preference 5
 set policy-options policy-statement {{IN_PEER}} term LOCAL_PREF_ADJ then accept
-set policy-options policy-statement {{IN_PEER}} term LOCAL_PREF_ADJ then next policy
 set policy-options policy-statement {{OUT_PEER}} term AS_PATH_PREPEND_3 then as-path-prepend "{{asn}} {{asn}} {{asn}}"
 set policy-options policy-statement {{OUT_PEER}} term AS_PATH_PREPEND_3 then accept
-set policy-options policy-statement {{OUT_PEER}} term AS_PATH_PREPEND_3 then next policy
 
 {% endif %}
 
